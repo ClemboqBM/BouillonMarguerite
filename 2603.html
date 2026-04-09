@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIG Analytique — Bouillon Marguerite</title>
+<script>
+  if (sessionStorage.getItem('bm_auth') !== '1') {
+    window.location.replace('../index.html');
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0e;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --bg4: #242424;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e4dc;
+    --text2: #888;
+    --text3: #444;
+    --neg: #e05555;
+    --pos: #6dbd8f;
+    --total-bg: #1e1e1e;
+    --total-text: #e8e4dc;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 56px;
+  }
+
+  .header-meta {
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-family: 'Courier New', monospace;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    letter-spacing: -.02em;
+  }
+
+  /* TOP RATIOS */
+  .top-ratios {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .top-ratio-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    padding: 20px 24px;
+  }
+
+  .top-ratio-label {
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 16px;
+  }
+
+  .top-ratio-months {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .top-ratio-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px 10px;
+    border-right: 1px solid var(--border);
+  }
+
+  .top-ratio-item:last-child { border-right: none; }
+
+  .top-ratio-item.highlight { background: rgba(255,255,255,0.02); }
+
+  .top-ratio-month {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Courier New', monospace;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+
+  .top-ratio-num {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--text2);
+  }
+
+  .top-ratio-num.bad { color: var(--neg); }
+  .top-ratio-num.good { color: var(--pos); }
+  .top-ratio-num.neutral { color: var(--text); }
+
+  /* COMMENTARY */
+  .commentary {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 48px;
+  }
+
+  .commentary-label {
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .commentary-body p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+    opacity: .88;
+  }
+
+  .commentary-body p + p { margin-top: 12px; }
+
+  /* COL HEADERS */
+  .col-headers {
+    display: grid;
+    grid-template-columns: 1fr 160px 160px 160px 80px;
+    gap: 0;
+    padding: 10px 16px 10px 40px;
+    margin-bottom: 4px;
+  }
+
+  .col-headers span {
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+
+  .col-headers span:first-child { text-align: left; }
+
+  /* SIG BLOCKS */
+  .sig-block {
+    margin-bottom: 6px;
+  }
+
+  /* TOTAL ROW */
+  .total-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 160px 160px 80px;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    cursor: default;
+    user-select: none;
+  }
+
+  .total-row.clickable {
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+  .total-row.clickable:hover { background: var(--bg4); }
+
+  .total-row .label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .total-row .label .toggle {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--text2);
+    flex-shrink: 0;
+    transition: transform .2s;
+    font-family: 'Courier New', monospace;
+    line-height: 1;
+  }
+
+  .total-row .val {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+  }
+
+  .total-row .evol {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+
+  .evol.neg { color: var(--neg); }
+  .evol.pos { color: var(--pos); }
+  .evol.neu { color: var(--text3); }
+
+  /* HIGHLIGHT ROWS (SIG results) */
+  .total-row.sig {
+    background: #111;
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .total-row.sig .label { font-size: 14px; }
+  .total-row.sig .val { font-size: 14px; }
+
+  .total-row.sig-pos { border-left: 3px solid var(--pos); }
+  .total-row.sig-neg { border-left: 3px solid var(--neg); }
+  .total-row.sig-neu { border-left: 3px solid #444; }
+
+  /* DETAIL ROWS */
+  .detail-section {
+    display: none;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+
+  .detail-section.open { display: block; }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 160px 160px 80px;
+    align-items: center;
+    padding: 9px 16px 9px 44px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background .1s;
+  }
+
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row:hover { background: rgba(255,255,255,0.02); }
+
+  .detail-row .d-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .detail-row .d-val {
+    font-size: 12px;
+    text-align: right;
+    color: var(--text2);
+    font-family: 'Courier New', monospace;
+  }
+
+  .detail-row .d-evol {
+    font-size: 11px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* SEPARATOR */
+  .sep {
+    height: 20px;
+  }
+
+  /* RATIOS */
+  .ratios {
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+
+  .ratios-title {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .ratios-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  .ratio-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .ratio-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .ratio-vals {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ratio-val {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .ratio-month {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Courier New', monospace;
+  }
+
+  .ratio-num {
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+  }
+
+  .ratio-num.mars { color: #6dbd8f; }
+
+  .footer {
+    margin-top: 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: .08em;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+  }
+
+  @media (max-width: 700px) {
+    .page { padding: 32px 16px 60px; }
+    .col-headers { grid-template-columns: 1fr 100px 100px 80px; }
+    .col-headers span:nth-child(2) { display: none; }
+    .total-row, .detail-row { grid-template-columns: 1fr 100px 100px 80px; }
+    .total-row .val:first-of-type, .detail-row .d-val:first-of-type { display: none; }
+    .ratios-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-meta">Bouillon Marguerite &nbsp;·&nbsp; SIG Analytique &nbsp;·&nbsp; T1 2026</div>
+    <h1>Résultats financiers<br>Jan. — Fév. — Mars 2026</h1>
+  </div>
+
+  <!-- RATIOS HAUT -->
+  <div class="top-ratios">
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Masse salariale / CA</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Jan.</span>
+          <span class="top-ratio-num">34,3%</span>
+        </div>
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Fév.</span>
+          <span class="top-ratio-num">31,6%</span>
+        </div>
+        <div class="top-ratio-item highlight">
+          <span class="top-ratio-month">Mars</span>
+          <span class="top-ratio-num bad">36,6%</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Food &amp; boissons / CA</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Jan.</span>
+          <span class="top-ratio-num">31,1%</span>
+        </div>
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Fév.</span>
+          <span class="top-ratio-num">28,4%</span>
+        </div>
+        <div class="top-ratio-item highlight">
+          <span class="top-ratio-month">Mars</span>
+          <span class="top-ratio-num neutral">29,4%</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Rentabilité avant impôt</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Jan.</span>
+          <span class="top-ratio-num">6%</span>
+        </div>
+        <div class="top-ratio-item">
+          <span class="top-ratio-month">Fév.</span>
+          <span class="top-ratio-num">17%</span>
+        </div>
+        <div class="top-ratio-item highlight">
+          <span class="top-ratio-month">Mars</span>
+          <span class="top-ratio-num neutral">9%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMENTAIRE DU MOIS -->
+  <div class="commentary">
+    <div class="commentary-label">Commentaire du mois</div>
+    <div class="commentary-body">
+      <p>Quelques éléments de contexte importants pour lire ce mois correctement.</p>
+      <p>La masse salariale intègre une moyenne de 5 000 € de provision pour congés payés — le chiffre réel peut varier de plus ou moins 1 000 €. Les charges sociales ne sont pas encore ventilées sur mars, la masse salariale globale est fiable.</p>
+      <p>Parmi les charges non récurrentes ce mois-ci : une régularisation de charges 2025 pour 2 700 €, et l'abonnement semestriel Skello (775 €) qui gonfle légèrement les abonnements.</p>
+      <p>Le crédit bail cuisine bascule en remboursement réel à 2 000 €/mois — contre 600 € en pré-loyer jusqu'ici. C'est un changement structurel qui pèse sur les charges fixes à partir de mars.</p>
+      <p>À noter : la formation préventeur (facture 5 400 €) et l'aide associée (+8 000 €) ne sont pas encore comptabilisées. J'attends la fin de l'opération complète (remboursement formation + paiement Charles) pour les intégrer proprement.</p>
+      <p>Sur la trésorerie : remboursement de 50 000 € de compte courant associé ce mois-ci. Pas de risque de trésorerie.</p>
+    </div>
+  </div>
+
+  <div class="col-headers">
+    <span></span>
+    <span>Janvier</span>
+    <span>Février</span>
+    <span>Mars</span>
+    <span>vs fév.</span>
+  </div>
+
+  <div id="sig-container"></div>
+
+  <div class="footer">Bouillon Marguerite &nbsp;·&nbsp; SIG Analytique &nbsp;·&nbsp; Janvier – Mars 2026</div>
+</div>
+
+<script>
+const fmt = v => {
+  if (v === null || v === undefined) return '—';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+};
+
+const evol = (cur, prev, isCharge = false) => {
+  if (cur === null || cur === undefined || !prev) return { txt: '—', cls: 'neu' };
+  const p = ((cur - prev) / Math.abs(prev)) * 100;
+  const txt = (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
+  const good = isCharge ? p < 0 : p > 0;
+  const bad  = isCharge ? p > 0 : p < 0;
+  return { txt, cls: good ? 'pos' : bad ? 'neg' : 'neu' };
+};
+
+const sig = [
+  {
+    id: 'ventes',
+    label: 'Ventes marchandises',
+    jan: 183241.22, fev: 177577.90, mar: 156693.43,
+    type: 'normal',
+    details: [
+      { label: 'Ventes food', jan: 149159.05, fev: 144739, mar: 128568.09 },
+      { label: 'Ventes boisson', jan: 32507.17, fev: 31621.27, mar: 28125.34 },
+      { label: 'Facturation diverse', jan: 1575, fev: 1217.63, mar: 0 },
+    ]
+  },
+  {
+    id: 'achats',
+    label: 'Achats consommés',
+    jan: 57065.50, fev: 50472.28, mar: 46140.58,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Achats food', jan: 49698.89, fev: 41839.72, mar: 40982 },
+      { label: 'Achats liquide', jan: 8227.79, fev: 7199.72, mar: 4985 },
+      { label: 'Variation stocks solides', jan: 142.18, fev: -2175, mar: 818 },
+      { label: 'Variation stocks liquide', jan: 719, fev: 742.16, mar: -991.58 },
+    ]
+  },
+  {
+    id: 'marge',
+    label: 'Marge globale',
+    jan: 126175.72, fev: 127105.62, mar: 110552.85,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+  {
+    id: 'autres',
+    label: 'Autres achats & charges',
+    jan: 34138.35, fev: 26427.25, mar: 23128.08,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Électricité', jan: 3681.89, fev: 3296.01, mar: 3614.46 },
+      { label: 'Matériel entretien', jan: 106.25, fev: 1016.19, mar: 143.91 },
+      { label: 'Consommables exploitation', jan: 1425, fev: 498.06, mar: 469.26 },
+      { label: 'Produits hygiène', jan: 1022.49, fev: 2962.60, mar: 969.23 },
+      { label: 'Matériel administratif', jan: 834.50, fev: 620.22, mar: 236.35 },
+      { label: 'Vêtements de travail', jan: 765.63, fev: 1552.59, mar: 220.87 },
+      { label: 'Vaisselle cuisine', jan: 107.58, fev: 230.90, mar: 69.32 },
+      { label: 'Vaisselle salle', jan: 720.06, fev: 317.68, mar: 847.84 },
+      { label: 'Entretien immobilier', jan: 0, fev: 898, mar: 165.91 },
+      { label: 'Entretien cuisine', jan: 132.11, fev: 650, mar: 0 },
+      { label: 'Loyer', jan: 6269.21, fev: 6269.21, mar: 6269.21 },
+      { label: 'Crédit baux', jan: 617.50, fev: 617.50, mar: 2004 },
+      { label: 'Charges loyer', jan: 232.67, fev: 232.67, mar: 232.67 },
+      { label: 'Assurances', jan: 571.24, fev: 571.24, mar: 571.24 },
+      { label: 'Comptable', jan: 3746.50, fev: 49, mar: 49 },
+      { label: 'Frais d\'acte', jan: 0, fev: 0, mar: 256.03 },
+      { label: 'Communication', jan: 445.26, fev: 352.02, mar: 44.79 },
+      { label: 'Restaurant / repas', jan: 191.78, fev: 117.26, mar: 150.59 },
+      { label: 'Abonnements (internet, TR…)', jan: 1721.55, fev: 1239.10, mar: 1907.61 },
+      { label: 'Frais bancaires', jan: 691.65, fev: 773.19, mar: 761.07 },
+      { label: 'Présidence', jan: 3000, fev: 3000, mar: 3000 },
+      { label: 'Direction générale', jan: 6620.74, fev: 0, mar: 0 },
+      { label: 'Divers', jan: 1228.92, fev: 1097.91, mar: 1113.81 },
+    ]
+  },
+  {
+    id: 'va',
+    label: 'Valeur ajoutée',
+    jan: 92037.37, fev: 100678.37, mar: 87424.77,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+  {
+    id: 'impots',
+    label: 'Impôts et taxes',
+    jan: 861.04, fev: 616.77, mar: 644.10,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Taxe foncière', jan: 416.67, fev: 416.67, mar: 416.67 },
+      { label: 'Taxe enseigne', jan: 166.67, fev: 166.67, mar: 166.67 },
+      { label: 'Taxe audiovisuelle', jan: 277.71, fev: 33.44, mar: 60.77 },
+    ]
+  },
+  {
+    id: 'salaires',
+    label: 'Masse salariale',
+    jan: 69385.48, fev: 60253.21, mar: 62382,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Rémunération du personnel', jan: 39990.79, fev: 36560.26, mar: 57382 },
+      { label: 'Congés payés', jan: 6528.59, fev: 4065.95, mar: 5000 },
+      { label: 'Charges sociales', jan: 22866.10, fev: 19627, mar: null },
+      { label: 'Médecine du travail', jan: 1368, fev: 0, mar: 0 },
+    ]
+  },
+  {
+    id: 'ebe',
+    label: 'EBE',
+    jan: 21790.85, fev: 39808.39, mar: 24398.67,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+  {
+    id: 'amort',
+    label: 'Dotations aux amortissements',
+    jan: 6845.24, fev: 6845.24, mar: 6845.24,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Amortissements sur immobilisations', jan: 6845.24, fev: 6845.24, mar: 6845.24 },
+    ]
+  },
+  {
+    id: 'rex',
+    label: 'Résultat d\'exploitation',
+    jan: 14945.61, fev: 32963.15, mar: 17553.43,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+  {
+    id: 'chgfin',
+    label: 'Charges financières',
+    jan: 3092, fev: 3092, mar: 3092,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Intérêts banque', jan: 1976, fev: 1976, mar: 1976 },
+      { label: 'Intérêts compte courant', jan: 1116, fev: 1116, mar: 1116 },
+    ]
+  },
+  {
+    id: 'prdfin',
+    label: 'Produits financiers',
+    jan: 0, fev: 0, mar: 0,
+    type: 'normal',
+    details: [
+      { label: 'Produits financiers', jan: 0, fev: 0, mar: 0 },
+    ]
+  },
+  {
+    id: 'rca',
+    label: 'Résultat courant avant impôt',
+    jan: 11853.61, fev: 29871.15, mar: 14461.43,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+  {
+    id: 'is',
+    label: 'Impôts sur les bénéfices',
+    jan: 3319.01, fev: 8363.92, mar: 4049.20,
+    type: 'normal', negative: true,
+    details: null
+  },
+  {
+    id: 'rnet',
+    label: 'Résultat net',
+    jan: 8534.60, fev: 21507.23, mar: 10412.23,
+    type: 'sig', sigClass: 'sig-pos',
+    details: null
+  },
+];
+
+const container = document.getElementById('sig-container');
+
+sig.forEach(row => {
+  const block = document.createElement('div');
+  block.className = 'sig-block';
+
+  const hasDetails = row.details && row.details.length > 0;
+  const ev = evol(row.mar, row.fev, row.negative === true);
+
+  // total row
+  const totalDiv = document.createElement('div');
+  const isSig = row.type === 'sig';
+  totalDiv.className = 'total-row' + (isSig ? ' sig ' + (row.sigClass || '') : '') + (hasDetails ? ' clickable' : '');
+
+  totalDiv.innerHTML = `
+    <div class="label">
+      ${hasDetails ? `<div class="toggle">+</div>` : `<div style="width:18px;"></div>`}
+      ${row.label}
+    </div>
+    <div class="val">${fmt(row.jan)}</div>
+    <div class="val">${fmt(row.fev)}</div>
+    <div class="val">${fmt(row.mar)}</div>
+    <div class="evol ${ev.cls}">${ev.txt}</div>
+  `;
+
+  block.appendChild(totalDiv);
+
+  // detail section
+  if (hasDetails) {
+    const detailDiv = document.createElement('div');
+    detailDiv.className = 'detail-section';
+
+    row.details.forEach(d => {
+      const devol = evol(d.mar, d.fev, row.negative === true);
+      const dr = document.createElement('div');
+      dr.className = 'detail-row';
+      dr.innerHTML = `
+        <div class="d-label">${d.label}</div>
+        <div class="d-val">${fmt(d.jan)}</div>
+        <div class="d-val">${fmt(d.fev)}</div>
+        <div class="d-val">${d.mar === null ? '<span style="color:#444;font-size:11px;">—</span>' : fmt(d.mar)}</div>
+        <div class="d-evol ${devol.cls}">${d.mar === null ? '—' : devol.txt}</div>
+      `;
+      detailDiv.appendChild(dr);
+    });
+
+    block.appendChild(detailDiv);
+
+    totalDiv.addEventListener('click', () => {
+      const isOpen = detailDiv.classList.contains('open');
+      detailDiv.classList.toggle('open');
+      const toggle = totalDiv.querySelector('.toggle');
+      if (toggle) toggle.textContent = isOpen ? '+' : '−';
+    });
+  }
+
+  // separator after sig rows
+  if (isSig) {
+    const sep = document.createElement('div');
+    sep.className = 'sep';
+    block.appendChild(sep);
+  }
+
+  container.appendChild(block);
+});
+</script>
+</body>
+</html>
