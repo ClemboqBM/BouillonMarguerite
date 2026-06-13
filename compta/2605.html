@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIG Analytique Mai 2026 — Bouillon Marguerite</title>
+<script>
+  if (sessionStorage.getItem('bm_auth') !== '1') {
+    window.location.replace('../index.html');
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0e; --bg2: #161616; --bg3: #1e1e1e; --bg4: #242424;
+    --border: rgba(255,255,255,0.15); --border2: rgba(255,255,255,0.25);
+    --text: #ffffff; --text2: #cccccc; --text3: #aaaaaa;
+    --neg: #e05555; --pos: #6dbd8f;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; min-height: 100vh; }
+  .page { max-width: 1000px; margin: 0 auto; padding: 60px 40px 100px; }
+
+  .header { border-bottom: 1px solid var(--border2); padding-bottom: 32px; margin-bottom: 48px; }
+  .header-meta { font-size: 11px; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: 14px; font-family: 'Courier New', monospace; }
+  h1 { font-size: clamp(26px, 4vw, 42px); font-weight: 700; line-height: 1.1; color: var(--text); letter-spacing: -.02em; }
+
+  .top-ratios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .top-ratio-card { background: var(--bg2); border: 1px solid var(--border2); padding: 20px 24px; }
+  .top-ratio-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); font-family: 'Courier New', monospace; margin-bottom: 16px; }
+  .top-ratio-months { display: flex; border-top: 1px solid var(--border); }
+  .top-ratio-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px 4px 10px; border-right: 1px solid var(--border); }
+  .top-ratio-item:last-child { border-right: none; }
+  .top-ratio-item.highlight { background: rgba(255,255,255,0.03); }
+  .top-ratio-month { font-size: 10px; color: var(--text3); font-family: 'Courier New', monospace; letter-spacing: .06em; margin-bottom: 6px; }
+  .top-ratio-num { font-size: 18px; font-weight: 700; font-family: 'Courier New', monospace; color: var(--text2); }
+  .top-ratio-num.bad { color: var(--neg); }
+  .top-ratio-num.good { color: var(--pos); }
+  .top-ratio-num.neutral { color: var(--text); }
+
+  .commentary { background: var(--bg2); border: 1px solid var(--border); padding: 24px; margin-bottom: 48px; }
+  .commentary-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text3); font-family: 'Courier New', monospace; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .commentary-body p { font-size: 15px; line-height: 1.8; color: var(--text); opacity: .9; }
+  .commentary-body p + p { margin-top: 12px; }
+  .commentary-body h3 { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; font-family: 'Courier New', monospace; margin: 20px 0 8px; }
+
+  .col-headers { display: grid; grid-template-columns: 1fr 120px 120px 120px 120px 120px 80px; gap: 0; padding: 10px 16px 10px 40px; margin-bottom: 4px; }
+  .col-headers span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); text-align: right; font-family: 'Courier New', monospace; }
+  .col-headers span:first-child { text-align: left; }
+
+  .sig-block { margin-bottom: 6px; }
+
+  .total-row { display: grid; grid-template-columns: 1fr 120px 120px 120px 120px 120px 80px; align-items: center; padding: 13px 16px; background: var(--bg3); border: 1px solid var(--border2); cursor: default; user-select: none; }
+  .total-row.clickable { cursor: pointer; transition: background .15s; }
+  .total-row.clickable:hover { background: var(--bg4); }
+  .total-row .label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .total-row .label .toggle { width: 18px; height: 18px; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text2); flex-shrink: 0; font-family: 'Courier New', monospace; line-height: 1; }
+  .total-row .val { font-size: 11px; font-weight: 500; text-align: right; font-family: 'Courier New', monospace; color: var(--text3); }
+  .total-row .val.current { color: var(--text); font-size: 13px; font-weight: 700; }
+  .total-row .evol { font-size: 12px; font-weight: 500; text-align: right; font-family: 'Courier New', monospace; }
+  .evol.neg { color: var(--neg); } .evol.pos { color: var(--pos); } .evol.neu { color: var(--text3); }
+
+  .total-row.sig { background: #111; border-color: rgba(255,255,255,0.2); }
+  .total-row.sig .label { font-size: 14px; }
+  .total-row.sig .val.current { font-size: 14px; }
+  .total-row.sig-pos { border-left: 3px solid var(--pos); }
+  .total-row.sig-neg { border-left: 3px solid var(--neg); }
+
+  .detail-section { display: none; background: var(--bg2); border: 1px solid var(--border); border-top: none; }
+  .detail-section.open { display: block; }
+  .detail-row { display: grid; grid-template-columns: 1fr 120px 120px 120px 120px 120px 80px; align-items: center; padding: 7px 16px 7px 44px; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .1s; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row:hover { background: rgba(255,255,255,0.02); }
+  .detail-row .d-label { font-size: 12px; color: var(--text2); }
+  .detail-row .d-val { font-size: 11px; text-align: right; color: var(--text3); font-family: 'Courier New', monospace; }
+  .detail-row .d-val.current { color: var(--text2); font-weight: 600; }
+  .detail-row .d-evol { font-size: 11px; text-align: right; font-family: 'Courier New', monospace; }
+
+  .sep { height: 20px; }
+
+  .footer { margin-top: 60px; border-top: 1px solid var(--border); padding-top: 24px; font-size: 10px; color: var(--text3); letter-spacing: .08em; text-align: center; font-family: 'Courier New', monospace; }
+
+  @media (max-width: 800px) {
+    .page { padding: 32px 16px 60px; }
+    .col-headers, .total-row, .detail-row { grid-template-columns: 1fr 100px 100px 80px; }
+    .col-headers span:nth-child(2), .col-headers span:nth-child(3), .col-headers span:nth-child(4) { display: none; }
+    .top-ratios { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-meta">Bouillon Marguerite &nbsp;·&nbsp; SIG Analytique &nbsp;·&nbsp; Jan. – Mai 2026</div>
+    <h1>Résultats financiers<br>Jan. — Fév. — Mars — Avr. — Mai 2026</h1>
+  </div>
+
+  <div class="top-ratios">
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Masse salariale / CA</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item"><span class="top-ratio-month">Jan.</span><span class="top-ratio-num">34,3%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Fév.</span><span class="top-ratio-num">31,6%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Mars</span><span class="top-ratio-num">35,5%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Avr.</span><span class="top-ratio-num">36,7%</span></div>
+        <div class="top-ratio-item highlight"><span class="top-ratio-month">Mai</span><span class="top-ratio-num bad">39,1%</span></div>
+      </div>
+    </div>
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Food &amp; boissons / CA</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item"><span class="top-ratio-month">Jan.</span><span class="top-ratio-num">30,4%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Fév.</span><span class="top-ratio-num">28,4%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Mars</span><span class="top-ratio-num">29,4%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Avr.</span><span class="top-ratio-num">32,9%</span></div>
+        <div class="top-ratio-item highlight"><span class="top-ratio-month">Mai</span><span class="top-ratio-num neutral">30,8%</span></div>
+      </div>
+    </div>
+    <div class="top-ratio-card">
+      <div class="top-ratio-label">Rentabilité avant impôt</div>
+      <div class="top-ratio-months">
+        <div class="top-ratio-item"><span class="top-ratio-month">Jan.</span><span class="top-ratio-num">9%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Fév.</span><span class="top-ratio-num">16%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Mars</span><span class="top-ratio-num">10%</span></div>
+        <div class="top-ratio-item"><span class="top-ratio-month">Avr.</span><span class="top-ratio-num">7%</span></div>
+        <div class="top-ratio-item highlight"><span class="top-ratio-month">Mai</span><span class="top-ratio-num bad">5%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="commentary">
+    <div class="commentary-label">Commentaire du mois</div>
+    <div class="commentary-body">
+      <p>Le mois confirme la tendance : on reste rentable mais on se resserre. 156 710 € de CA, résultat net à 5 312 €, rentabilité après impôt à 3,5% — le plus bas depuis l'ouverture.</p>
+
+      <h3>Chiffres clés</h3>
+      <p>Avril : 152 903 € &gt; Mai : 156 710 € — +2,5% (hors subvention avril). Résultat net : 8 845 € (avec 6,5k préventeur) &gt; 5 312 € — -40%. Rentabilité après impôt : 5% (avec préventeur) &gt; 3,5%.</p>
+
+      <h3>La masse salariale</h3>
+      <p>C'est le sujet du mois. 61,3k € soit 39,1% du CA — le pire ratio depuis janvier. L'explication est claire : le 1er mai a généré environ 1 800 € de majoration hors charges patronales, et la seconde en cuisine revenue d'arrêt maladie pèse toujours sur la ligne. Ce problème se règlera en juin avec son départ. Sans ces deux éléments, on serait autour de 56k€, soit ~36% — encore élevé mais plus proche de la réalité structurelle.</p>
+      <p>On a fait -1 (seconde, départ 19 juin) et on essaye encore de faire -1 en cuisine. Mais ce sont de gros bateaux à piloter — c'est long de revenir sur la bonne route. Surtout qu'avec le -2,5 pour l'ouverture du Haillan, il ne faut pas trop fragiliser l'équipe. Il ne faut donc pas s'attendre à retomber dans de bons ratios de MS avant quelques mois. C'est selon moi le prix à payer de l'hypercroissance et de faire le tour de l'année.</p>
+
+      <h3>Les autres charges se normalisent</h3>
+      <p>24 842 € soit -20,7% vs avril. Pas d'achats exceptionnels ce mois-ci, les lignes reviennent à leur niveau habituel. La communication monte légèrement à 1 587 € (Divers_COM) — cohérent avec le démarrage de l'agence.</p>
+
+      <h3>Le food cost se stabilise</h3>
+      <p>Food : 32,4% en mai vs 35,5% en avril. La vigilance sur les pertes et les prix commence à porter ses fruits — encourageant car on a commencé à faire attention vers mi-avril. Objectif : se rapprocher des 30/31%. F&amp;B à 30,8% — objectif d'aller chercher 69,5% de marge.</p>
+
+      <h3>La marge globale recule</h3>
+      <p>108 466 € en mai vs 114 088 € en avril. Mécaniquement lié à la baisse de CA. Le taux de marge reste correct à 69,2%.</p>
+
+      <h3>Ce qui va se régler en juin</h3>
+      <p>Le départ de la seconde en cuisine (19 juin) va libérer plusieurs milliers d'euros sur la masse salariale — mais pas encore totalement visible en juin. C'est le principal levier immédiat. Si le CA tient autour de 150-155k€, le ratio MS devrait repasser sous 37%.</p>
+    </div>
+  </div>
+
+  <div class="col-headers">
+    <span></span>
+    <span>Janv.</span>
+    <span>Févr.</span>
+    <span>Mars</span>
+    <span>Avr.</span>
+    <span>Mai</span>
+    <span>vs avr.</span>
+  </div>
+
+  <div id="sig-container"></div>
+
+  <div class="footer">Bouillon Marguerite &nbsp;·&nbsp; SIG Analytique &nbsp;·&nbsp; Janvier – Mai 2026</div>
+</div>
+
+<script>
+const fmt = v => {
+  if (v === null || v === undefined) return '—';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+};
+
+const evol = (cur, prev, isCharge = false) => {
+  if (cur === null || cur === undefined || prev === null || prev === undefined || prev === 0) return { txt: '—', cls: 'neu' };
+  const p = ((cur - prev) / Math.abs(prev)) * 100;
+  const txt = (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
+  const good = isCharge ? p < 0 : p > 0;
+  const bad  = isCharge ? p > 0 : p < 0;
+  return { txt, cls: good ? 'pos' : bad ? 'neg' : 'neu' };
+};
+
+const sig = [
+  {
+    id: 'ventes', label: 'Ventes marchandises',
+    jan: 183241.22, fev: 177577.90, mar: 156693.43, avr: 164378.46, mai: 156709.92,
+    type: 'normal',
+    details: [
+      { label: 'Ventes food',         jan: 149159.05, fev: 144739,   mar: 128568.09, avr: 124536.61, mai: 128753.43 },
+      { label: 'Ventes boisson',      jan: 32507.17,  fev: 31621.27, mar: 28125.34,  avr: 28366.85,  mai: 27956.49 },
+      { label: 'Facturation diverse', jan: 1575,       fev: 1217.63,  mar: 0,          avr: 0,          mai: 0 },
+      { label: 'Subventions',         jan: 0,          fev: 0,         mar: 0,          avr: 11475,      mai: 0 },
+    ]
+  },
+  {
+    id: 'achats', label: 'Achats consommés',
+    jan: 55762.48, fev: 50472.28, mar: 46132.10, avr: 50289.99, mai: 48243.58,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Achats food',              jan: 48884.23, fev: 41839.72, mar: 40973.15, avr: 43283.17, mai: 41413.31 },
+      { label: 'Achats liquide',           jan: 7739.43,  fev: 7199.72,  mar: 4985.37,  avr: 6463.80,  mai: 6923.70 },
+      { label: 'Variation stocks solides', jan: 142.18,   fev: -2175,    mar: 818,       avr: -871.91,  mai: -248.31 },
+      { label: 'Variation stocks liquide', jan: 719,       fev: 742.16,   mar: -991.58,   avr: 328.89,   mai: 341.74 },
+    ]
+  },
+  {
+    id: 'marge', label: 'Marge globale',
+    jan: 127478.74, fev: 127105.62, mar: 110561.33, avr: 114088.47, mai: 108466.34,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+  {
+    id: 'autres', label: 'Autres achats & charges',
+    jan: 31637.34, fev: 27556.32, mar: 24659.71, avr: 31301.35, mai: 24842.17,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Électricité',                  jan: 3681.89,  fev: 3296.01,  mar: 3614.46,  avr: 2550.73,  mai: 2106.14 },
+      { label: 'Matériel entretien',           jan: 106.25,   fev: 1016.19,  mar: 143.91,   avr: 457.29,   mai: 121.38 },
+      { label: 'Consommables exploitation',    jan: 1388.16,  fev: 498.06,   mar: 469.26,   avr: 296.63,   mai: 750.02 },
+      { label: 'Produits hygiène',             jan: 1022.49,  fev: 2962.60,  mar: 969.22,   avr: 2277.19,  mai: 1671.79 },
+      { label: 'Matériel administratif',       jan: 834.50,   fev: 620.22,   mar: 236.35,   avr: 40.47,    mai: 14.12 },
+      { label: 'Vêtements de travail',         jan: 765.63,   fev: 1552.59,  mar: 220.87,   avr: 31.29,    mai: 37.35 },
+      { label: 'Vaisselle cuisine',            jan: 107.58,   fev: 230.90,   mar: 69.32,    avr: 1339.58,  mai: 1200.17 },
+      { label: 'Vaisselle salle',              jan: 720.06,   fev: 317.68,   mar: 847.83,   avr: 117.17,   mai: 225.12 },
+      { label: 'Entretien immobilier',         jan: 0,         fev: 898,       mar: 153.32,   avr: 1119.97,  mai: 90.86 },
+      { label: 'Entretien cuisine',            jan: 132.11,   fev: 650,       mar: 0,         avr: 0,         mai: 268.99 },
+      { label: 'Loyer',                        jan: 6269.21,  fev: 6269.21,  mar: 6269.21,  avr: 6269.21,  mai: 6269.21 },
+      { label: 'Crédit baux',                  jan: 617.50,   fev: 617.50,   mar: 2004,      avr: 2004,      mai: 2118 },
+      { label: 'Charges loyer',                jan: 232.67,   fev: 232.67,   mar: 232.67,   avr: 2995.11,  mai: 290.83 },
+      { label: 'Assurances',                   jan: 571.24,   fev: 571.24,   mar: 571.24,   avr: 567.22,   mai: 567.22 },
+      { label: 'Comptable',                    jan: 1282.33,  fev: 1282.33,  mar: 1282.33,  avr: 1103.67,  mai: 1103.67 },
+      { label: 'Divers honoraires',            jan: 0,         fev: 0,         mar: 0,         avr: 1000,      mai: 0 },
+      { label: 'Communication',                jan: 445.26,   fev: 352.02,   mar: 130.46,   avr: 1686.07,  mai: 1587.04 },
+      { label: 'Restaurant / repas',           jan: 191.78,   fev: 117.26,   mar: 150.59,   avr: 233.48,   mai: 0 },
+      { label: 'Voyage / réception',           jan: 0,         fev: 0,         mar: 0,         avr: 51.86,    mai: 181.13 },
+      { label: 'Abonnements (internet, TR…)',  jan: 1721.55,  fev: 1239.10,  mar: 2092.98,  avr: 1172.91,  mai: 1111.08 },
+      { label: 'Frais bancaires',              jan: 691.65,   fev: 773.19,   mar: 761.06,   avr: 751.12,   mai: 819.12 },
+      { label: 'Présidence',                   jan: 3000,      fev: 3000,      mar: 3000,      avr: 2700,      mai: 3000 },
+      { label: 'Direction générale',           jan: 6620.74,  fev: 0,         mar: 0,         avr: 0,         mai: 0 },
+      { label: 'Divers',                       jan: 1228.92,  fev: 1097.91,  mar: 1113.81,  avr: 1137.72,  mai: 1169.61 },
+    ]
+  },
+  {
+    id: 'va', label: 'Valeur ajoutée',
+    jan: 95841.40, fev: 99549.30, mar: 85901.62, avr: 82787.12, mai: 83624.17,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+  {
+    id: 'impots', label: 'Impôts et taxes',
+    jan: 861.04, fev: 616.77, mar: 677.54, avr: 677.54, mai: 583.33,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Taxe foncière',      jan: 416.67, fev: 416.67, mar: 416.67, avr: 416.67, mai: 416.67 },
+      { label: 'Taxe enseigne',      jan: 166.67, fev: 166.67, mar: 166.67, avr: 166.67, mai: 166.67 },
+      { label: 'Taxe audiovisuelle', jan: 277.71, fev: 33.44,  mar: 94.21,  avr: 94.21,  mai: 0 },
+    ]
+  },
+  {
+    id: 'salaires', label: 'Masse salariale',
+    jan: 69385.48, fev: 60253.21, mar: 60069.08, avr: 59887.51, mai: 65725.59,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Rémunération du personnel', jan: 39990.79, fev: 36560.26, mar: 35526.74, avr: 35694.54, mai: 39214.26 },
+      { label: 'Congés payés',              jan: 6528.59,  fev: 4065.95,  mar: 4501.57,  avr: 3733.70,  mai: 4419.33 },
+      { label: 'Charges sociales',          jan: 22866.10, fev: 19627,    mar: 20040.77, avr: 20459.27, mai: 22092 },
+      { label: 'Médecine du travail',       jan: 1368,      fev: 0,         mar: 0,         avr: 0,         mai: 0 },
+    ]
+  },
+  {
+    id: 'ebe', label: 'EBE',
+    jan: 25594.87, fev: 38679.31, mar: 25154.99, avr: 22222.06, mai: 17315.24,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+  {
+    id: 'amort', label: 'Dotations aux amortissements',
+    jan: 6845.24, fev: 6845.24, mar: 6845.24, avr: 6845.24, mai: 6845.24,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Amortissements sur immobilisations', jan: 6845.24, fev: 6845.24, mar: 6845.24, avr: 6845.24, mai: 6845.24 },
+    ]
+  },
+  {
+    id: 'rex', label: "Résultat d'exploitation",
+    jan: 18749.64, fev: 31834.08, mar: 18309.76, avr: 15376.83, mai: 10470.01,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+  {
+    id: 'chgfin', label: 'Charges financières',
+    jan: 3092, fev: 3092, mar: 3092, avr: 3092, mai: 3092,
+    type: 'normal', negative: true,
+    details: [
+      { label: 'Intérêts banque',         jan: 1976, fev: 1976, mar: 1976, avr: 1976, mai: 1976 },
+      { label: 'Intérêts compte courant', jan: 1116, fev: 1116, mar: 1116, avr: 1116, mai: 1116 },
+    ]
+  },
+  {
+    id: 'prdfin', label: 'Produits financiers',
+    jan: 0, fev: 0, mar: 0, avr: 0, mai: 0,
+    type: 'normal',
+    details: [{ label: 'Produits financiers', jan: 0, fev: 0, mar: 0, avr: 0, mai: 0 }]
+  },
+  {
+    id: 'rca', label: 'Résultat courant avant impôt',
+    jan: 15657.64, fev: 28742.08, mar: 15217.76, avr: 12284.83, mai: 7378.01,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+  {
+    id: 'is', label: 'Impôts sur les bénéfices',
+    jan: 4384.14, fev: 8047.78, mar: 4260.97, avr: 3439.75, mai: 2065.84,
+    type: 'normal', negative: true, details: null
+  },
+  {
+    id: 'rnet', label: 'Résultat net',
+    jan: 11273.50, fev: 20694.29, mar: 10956.78, avr: 8845.07, mai: 5312.16,
+    type: 'sig', sigClass: 'sig-pos', details: null
+  },
+];
+
+const container = document.getElementById('sig-container');
+
+sig.forEach(row => {
+  const block = document.createElement('div');
+  block.className = 'sig-block';
+  const hasDetails = row.details && row.details.length > 0;
+  const ev = evol(row.mai, row.avr, row.negative === true);
+  const isSig = row.type === 'sig';
+
+  const totalDiv = document.createElement('div');
+  totalDiv.className = 'total-row' + (isSig ? ' sig ' + (row.sigClass || '') : '') + (hasDetails ? ' clickable' : '');
+  totalDiv.innerHTML = `
+    <div class="label">
+      ${hasDetails ? `<div class="toggle">+</div>` : `<div style="width:18px;"></div>`}
+      ${row.label}
+    </div>
+    <div class="val">${fmt(row.jan)}</div>
+    <div class="val">${fmt(row.fev)}</div>
+    <div class="val">${fmt(row.mar)}</div>
+    <div class="val">${fmt(row.avr)}</div>
+    <div class="val current">${fmt(row.mai)}</div>
+    <div class="evol ${ev.cls}">${ev.txt}</div>
+  `;
+  block.appendChild(totalDiv);
+
+  if (hasDetails) {
+    const detailDiv = document.createElement('div');
+    detailDiv.className = 'detail-section';
+    row.details.forEach(d => {
+      const devol = evol(d.mai, d.avr, row.negative === true);
+      const dr = document.createElement('div');
+      dr.className = 'detail-row';
+      dr.innerHTML = `
+        <div class="d-label">${d.label}</div>
+        <div class="d-val">${fmt(d.jan)}</div>
+        <div class="d-val">${fmt(d.fev)}</div>
+        <div class="d-val">${fmt(d.mar)}</div>
+        <div class="d-val">${fmt(d.avr)}</div>
+        <div class="d-val current">${d.mai === null ? '—' : fmt(d.mai)}</div>
+        <div class="d-evol ${devol.cls}">${d.mai === null ? '—' : devol.txt}</div>
+      `;
+      detailDiv.appendChild(dr);
+    });
+    block.appendChild(detailDiv);
+    totalDiv.addEventListener('click', () => {
+      const isOpen = detailDiv.classList.contains('open');
+      detailDiv.classList.toggle('open');
+      const toggle = totalDiv.querySelector('.toggle');
+      if (toggle) toggle.textContent = isOpen ? '+' : '−';
+    });
+  }
+
+  if (isSig) {
+    const sep = document.createElement('div');
+    sep.className = 'sep';
+    block.appendChild(sep);
+  }
+
+  container.appendChild(block);
+});
+</script>
+</body>
+</html>
