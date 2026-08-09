@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyse Juillet 2026 — Bouillon Marguerite</title>
+<script>
+  if (sessionStorage.getItem('bm_auth') !== '1') {
+    window.location.replace('../index.html');
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0e; --bg2: #161616; --bg3: #1e1e1e;
+    --border: rgba(255,255,255,0.15); --border2: rgba(255,255,255,0.25);
+    --text: #ffffff; --text2: #cccccc; --text3: #aaaaaa;
+    --neg: #e05555; --pos: #6dbd8f;
+    --red1: #5c1a1a; --red2: #7a2424; --red3: #a33030; --red4: #c94040;
+    --ora1: #5c3a10; --ora2: #7a5218; --ora3: #b87828; --ora4: #e09840;
+    --yel1: #4a4210; --yel2: #6a5e14; --yel3: #9a8a20; --yel4: #c8b840;
+    --grn1: #1a3c20; --grn2: #245230; --grn3: #2e7040; --grn4: #4aad60;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; min-height: 100vh; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 60px 40px 100px; }
+
+  .header { border-bottom: 1px solid var(--border2); padding-bottom: 32px; margin-bottom: 52px; }
+  .header-meta { font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-size: clamp(30px, 5vw, 50px); font-weight: 700; line-height: 1.1; color: var(--text); letter-spacing: -.02em; }
+
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 36px; }
+  .kpi { background: var(--bg2); padding: 20px 24px; }
+  .kpi-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .kpi-line { font-size: 13px; color: var(--text2); margin-bottom: 4px; line-height: 1.5; }
+  .kpi-var { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 500; margin-top: 6px; }
+  .kpi-var.neg { color: var(--neg); } .kpi-var.pos { color: var(--pos); } .kpi-var.neu { color: var(--text2); }
+
+  .analyse { margin-bottom: 64px; }
+  .analyse h2 { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--text2); margin-bottom: 20px; }
+  .analyse-body { max-width: 720px; }
+  .analyse-section { margin-bottom: 28px; }
+  .analyse-section h3 { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .08em; font-family: 'Courier New', monospace; }
+  .analyse-section p { font-size: 15px; line-height: 1.85; color: var(--text); opacity: .9; }
+  .analyse-section p + p { margin-top: 12px; }
+
+  .section-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  /* SEMAINE/WE */
+  .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 64px; }
+  .breakdown-card { background: var(--bg2); border: 1px solid var(--border2); padding: 24px; }
+  .breakdown-title { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 20px; }
+  .breakdown-col-head { display: flex; justify-content: flex-end; gap: 24px; margin-bottom: 8px; }
+  .breakdown-col-head span { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; min-width: 80px; text-align: right; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .breakdown-row:last-child { border-bottom: none; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.12); margin-top: 4px; }
+  .breakdown-label { font-size: 13px; color: var(--text2); }
+  .breakdown-vals { display: flex; gap: 24px; }
+  .breakdown-val { text-align: right; min-width: 80px; }
+  .breakdown-val .v { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 600; color: var(--text); }
+  .breakdown-val .sub { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text3); }
+
+  /* CHARTS */
+  .charts-section { margin-bottom: 64px; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-card { background: var(--bg2); border: 1px solid var(--border2); padding: 24px; }
+  .chart-title { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+  .chart-legend { display: flex; gap: 16px; margin-bottom: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: var(--text2); }
+  .chart-legend span { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 10px; height: 10px; display: inline-block; border-radius: 2px; }
+
+  /* HEATMAP */
+  .tables-section { margin-bottom: 64px; }
+  .table-block { margin-bottom: 40px; }
+  .table-title { font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); margin-bottom: 12px; }
+  .table-wrap { overflow-x: auto; }
+  table.heatmap { width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 12px; }
+  table.heatmap th { background: var(--bg3); color: var(--text2); font-weight: 500; padding: 8px 10px; text-align: center; letter-spacing: .06em; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border2); }
+  table.heatmap th:first-child { text-align: left; }
+  table.heatmap td { padding: 7px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+  table.heatmap td:first-child { text-align: left; color: var(--text2); font-size: 11px; white-space: nowrap; background: var(--bg2); min-width: 100px; }
+  table.heatmap tr.month-jan td:first-child,
+  table.heatmap tr.month-fev td:first-child { color: var(--text3); font-size: 10px; }
+  table.heatmap tr.month-mars td:first-child,
+  table.heatmap tr.month-avr td:first-child,
+  table.heatmap tr.month-mai td:first-child,
+  table.heatmap tr.month-juin td:first-child { color: var(--text2); font-size: 11px; }
+  table.heatmap tr.month-juil td:first-child { color: var(--text); font-size: 11px; font-weight: 600; }
+  .h-r4{background:var(--red4);color:#fff} .h-r3{background:var(--red3);color:#ffccc0}
+  .h-r2{background:var(--red2);color:#ffb8b0} .h-r1{background:var(--red1);color:#ff9a90}
+  .h-o4{background:var(--ora4);color:#fff} .h-o3{background:var(--ora3);color:#ffe4c0}
+  .h-o2{background:var(--ora2);color:#ffd0a0}
+  .h-y4{background:var(--yel4);color:#fff} .h-y3{background:var(--yel3);color:#f0e080}
+  .h-y2{background:var(--yel2);color:#e0d060}
+  .h-g4{background:var(--grn4);color:#fff} .h-g3{background:var(--grn3);color:#c0f0d0}
+  .h-g2{background:var(--grn2);color:#a0e0b8} .h-g1{background:var(--grn1);color:#80d0a0}
+  .h-na{background:var(--bg3);color:var(--text3)}
+
+  .footer { border-top: 1px solid var(--border); padding-top: 24px; font-family: 'Courier New', monospace; font-size: 10px; color: var(--text3); letter-spacing: .08em; text-align: center; }
+
+  @media (max-width: 700px) {
+    .page { padding: 32px 20px 60px; }
+    .kpis, .breakdown-grid, .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-meta">Bouillon Marguerite &nbsp;·&nbsp; Villenave d'Ornon &nbsp;·&nbsp; Bordeaux Métropole</div>
+    <h1>Analyse Juillet 2026</h1>
+  </div>
+
+  <div class="analyse">
+    <h2>Lecture du mois</h2>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-label">Chiffre d'affaires HT</div>
+        <div class="kpi-line">Juin 137 707 € &rarr; Juil. 147 703 €</div>
+        <div class="kpi-var pos">+7,3%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Couverts</div>
+        <div class="kpi-line">Juin 6 853 &rarr; Juil. 7 221</div>
+        <div class="kpi-var pos">+5,4%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">TM HT global</div>
+        <div class="kpi-line">Juin 20,09 € &rarr; Juil. 20,45 €</div>
+        <div class="kpi-var pos">+1,8%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Couverts midi</div>
+        <div class="kpi-line">Juin 3 364 &rarr; Juil. 3 036</div>
+        <div class="kpi-var neg">-9,7%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Couverts soir</div>
+        <div class="kpi-line">Juin 3 489 &rarr; Juil. 4 185</div>
+        <div class="kpi-var pos">+19,9%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Meilleure semaine</div>
+        <div class="kpi-line">S31 27 juil. — 45 438 €</div>
+        <div class="kpi-var neu" style="font-size:13px;">2e depuis ouverture</div>
+      </div>
+    </div>
+
+    <div class="analyse-body">
+      <div class="analyse-section">
+        <p>Le rebond est là, et il est d'autant plus remarquable qu'il s'est fait dans des conditions très difficiles. 147,7k€ de CA, +7,3% vs juin, EBE positif à 19 369 €, résultat AI à 9,5k€. Mais derrière ces chiffres, il y a une équipe qui a tenu dans des conditions que peu de restaurants auraient encaissées.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>Ce qui s'est passé en coulisses</h3>
+        <p>La cuisine est passée de 9 à 6 personnes, avec seulement 3 de l'ancienne équipe. Un turn-over massif, 9 départs sur le mois, au moins 5 ou 6 personnes qui ne se sont pas présentées à leur premier jour. Des absences, des retards... Dans ce contexte, signer la deuxième meilleure semaine de l'année en S31 (45 438 €, juste derrière le 9 février) c'est une performance collective qui mérite d'être nommée clairement : les gars ont tenu. C'est important de le dire et de le retenir.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>La montée en puissance</h3>
+        <p>Le mois démarre lentement — S28 à 29 741 €, S29 à 30 379 €. Les deux premières semaines de juillet sont creuses. Puis ça accélère (sûrement grâce aux feux) : S30 à 35 497 € (+17%), S31 à 45 438 € (+28%). La haute saison revient. Cette semaine on devrait atterrir vers 41k€ ce qui est bien. Et fin août/début septembre ça doit repartir en flèche. Et surtout dès que les températures seront plus fraîches, on retrouvera nos week-ends remplis — là où on a le plus perdu sur la période estivale.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>Le soir porte l'été</h3>
+        <p>Retournement structurel confirmé : le soir explose à +19,9% vs juin pendant que le midi recule de -9,7%. En S31, le soir semaine atteint 179 couverts/jour, le soir week-end 223. Les gens sortent dîner l'été. C'est notre moment fort — il faut en profiter.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>La masse salariale : un mois de transition</h3>
+        <p>44,8% affiché, mais le chiffre est à lire avec précaution. Les congés payés à -11 363 € (reprise de provisions sur les 9 départs + CP posés) allègent la ligne artificiellement. Encore trop haute, portée par les coûts de turn-over, les heures sup et les SDTC liés aux nombreux départs. Ce n'est pas une surprise : reconstruire une cuisine coûte.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>Ce qui change</h3>
+        <p>En salle, l'équipe commence à être bien rodée. Benjamin prend sa place d'assistant manager et ça se voit. La décision de le repositionner et de lui faire confiance semble être le bon pari. Clara et Ben côté salle, Théo et Léo en cuisine — la structure de direction se met en place. C'est la condition pour que le passage de main se fasse bien avant l'ouverture du Haillan.</p>
+      </div>
+
+      <div class="analyse-section">
+        <h3>Le contexte plus large</h3>
+        <p>Sainte-Eulalie est proche de la signature mais pas encore finalisée — des questions sur la partie sociale à creuser avant de s'engager, ce qui est la bonne décision. Si les deux ouvertures (Haillan + Sainte-Eulalie) se font dans un délai de deux mois et demi, le sureffectif temporaire sera nécessaire et assumé. L'objectif n'est pas d'optimiser les marges immédiatement, c'est de poser la marque Bouillon Marguerite comme une référence bordelaise. L'optimisation RH, food cost et charges viendra quand les trois restaurants seront stabilisés.</p>
+        <p>Le dégât des eaux avance : Duret passe fin août/début septembre, l'assurance suit.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREAKDOWN SEMAINE/WE -->
+  <div style="margin-bottom:64px;">
+    <div class="section-label">Analyse semaine vs week-end</div>
+    <div class="breakdown-grid">
+      <div class="breakdown-card">
+        <div class="breakdown-title">Midi — couverts/jour &amp; TM</div>
+        <div class="breakdown-col-head">
+          <span>Semaine</span>
+          <span>Week-end</span>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S28 6-12 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">79</div><div class="sub">19,90 €</div></div>
+            <div class="breakdown-val"><div class="v">128</div><div class="sub">21,70 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S29 13-19 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">97</div><div class="sub">20,30 €</div></div>
+            <div class="breakdown-val"><div class="v">102</div><div class="sub">19,80 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S30 20-26 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">95</div><div class="sub">20,10 €</div></div>
+            <div class="breakdown-val"><div class="v">142</div><div class="sub">21,50 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S31 27 juil.+</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">111</div><div class="sub">20,90 €</div></div>
+            <div class="breakdown-val"><div class="v">192</div><div class="sub">22,40 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label" style="color:var(--text);font-weight:600;">Moy. juillet</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v" style="color:var(--text);">96</div><div class="sub">20,30 €</div></div>
+            <div class="breakdown-val"><div class="v" style="color:var(--text);">141</div><div class="sub">21,35 €</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-card">
+        <div class="breakdown-title">Soir — couverts/jour &amp; TM</div>
+        <div class="breakdown-col-head">
+          <span>Semaine</span>
+          <span>Week-end</span>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S28 6-12 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">110</div><div class="sub">22,80 €</div></div>
+            <div class="breakdown-val"><div class="v">151</div><div class="sub">22,00 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S29 13-19 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">109</div><div class="sub">22,10 €</div></div>
+            <div class="breakdown-val"><div class="v">167</div><div class="sub">22,40 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S30 20-26 juil.</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">144</div><div class="sub">21,80 €</div></div>
+            <div class="breakdown-val"><div class="v">189</div><div class="sub">22,70 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">S31 27 juil.+</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v">179</div><div class="sub">22,30 €</div></div>
+            <div class="breakdown-val"><div class="v">223</div><div class="sub">23,00 €</div></div>
+          </div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label" style="color:var(--text);font-weight:600;">Moy. juillet</div>
+          <div class="breakdown-vals">
+            <div class="breakdown-val"><div class="v" style="color:var(--text);">136</div><div class="sub">22,25 €</div></div>
+            <div class="breakdown-val"><div class="v" style="color:var(--text);">183</div><div class="sub">22,53 €</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAPHIQUES -->
+  <div class="charts-section">
+    <div class="section-label">Graphiques</div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">CA HT mensuel</div>
+        <div style="position:relative;height:220px;"><canvas id="caChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Couverts midi vs soir</div>
+        <div class="chart-legend">
+          <span><span class="leg-dot" style="background:#5DCAA5;"></span>Midi</span>
+          <span><span class="leg-dot" style="background:#378ADD;"></span>Soir</span>
+        </div>
+        <div style="position:relative;height:200px;"><canvas id="cvtsChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">CA HT par semaine — juillet 2026</div>
+        <div style="position:relative;height:200px;"><canvas id="semChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Soir : semaine vs week-end (cvts/jour)</div>
+        <div class="chart-legend">
+          <span><span class="leg-dot" style="background:#378ADD;"></span>Semaine</span>
+          <span><span class="leg-dot" style="background:#5DCAA5;"></span>Week-end</span>
+        </div>
+        <div style="position:relative;height:200px;"><canvas id="soirChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEATMAPS -->
+  <div class="tables-section">
+    <div class="section-label">Couverts jour par jour — mise en forme par colonne</div>
+    <div class="table-block">
+      <div class="table-title">Nombre de couverts J/J (total)</div>
+      <div class="table-wrap"><table class="heatmap" id="tbl-total"></table></div>
+    </div>
+    <div class="table-block">
+      <div class="table-title">Nombre de couverts midi</div>
+      <div class="table-wrap"><table class="heatmap" id="tbl-midi"></table></div>
+    </div>
+    <div class="table-block">
+      <div class="table-title">Nombre de couverts soir</div>
+      <div class="table-wrap"><table class="heatmap" id="tbl-soir"></table></div>
+    </div>
+  </div>
+
+  <div class="footer">Bouillon Marguerite &nbsp;·&nbsp; Analyse mensuelle juillet 2026</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const gridColor = 'rgba(255,255,255,0.06)';
+const chartOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+const totalData = [
+  { sem: '',            m: '',     vals: [null,null,null,null,468,479,303] },
+  { sem: '5 janv.',     m: 'jan',  vals: [159,183,246,246,354,501,368] },
+  { sem: '12 janv.',    m: 'jan',  vals: [188,257,233,243,390,501,218] },
+  { sem: '19 janv.',    m: 'jan',  vals: [176,241,231,244,370,475,269] },
+  { sem: '26 janv.',    m: 'jan',  vals: [195,234,230,265,396,468,288] },
+  { sem: '2 févr.',     m: 'fev',  vals: [230,238,254,280,350,500,287] },
+  { sem: '9 févr.',     m: 'fev',  vals: [176,324,300,301,406,486,360] },
+  { sem: '16 févr.',    m: 'fev',  vals: [271,323,259,292,440,443,280] },
+  { sem: '23 févr.',    m: 'fev',  vals: [163,194,242,229,377,513,252] },
+  { sem: '2 mars',      m: 'mars', vals: [147,185,194,208,340,516,273] },
+  { sem: '9 mars',      m: 'mars', vals: [170,179,251,255,314,433,235] },
+  { sem: '16 mars',     m: 'mars', vals: [160,181,185,183,326,400,208] },
+  { sem: '23 mars',     m: 'mars', vals: [178,144,217,204,313,506,212] },
+  { sem: '30 mars',     m: 'mars', vals: [186,176,178,274,270,351,254] },
+  { sem: '6 avr.',      m: 'avr',  vals: [163,135,207,224,281,449,274] },
+  { sem: '13 avr.',     m: 'avr',  vals: [279,223,269,263,315,428,272] },
+  { sem: '20 avr.',     m: 'avr',  vals: [138,166,135,181,243,447,189] },
+  { sem: '27 avr.',     m: 'avr',  vals: [113,220,198,313,318,506,281] },
+  { sem: '4 mai',       m: 'mai',  vals: [201,254,245,286,354,438,259] },
+  { sem: '11 mai',      m: 'mai',  vals: [174,204,276,369,387,461,214] },
+  { sem: '18 mai',      m: 'mai',  vals: [171,211,199,147,144,145,175] },
+  { sem: '25 mai',      m: 'mai',  vals: [147,107,119,143,228,277,421] },
+  { sem: '1 juin',      m: 'juin', vals: [153,197,192,265,272,386,203] },
+  { sem: '8 juin',      m: 'juin', vals: [221,219,257,200,282,257,161] },
+  { sem: '15 juin',     m: 'juin', vals: [157,196,220,213,196,175,276] },
+  { sem: '22 juin',     m: 'juin', vals: [130,197,270,286,169,370,310] },
+  { sem: '29 juin',     m: 'juin', vals: [194,229,229,225,312,211,181] },
+  { sem: '6 juil.',     m: 'juil', vals: [140,231,212,164,243,279,267] },
+  { sem: '13 juil.',    m: 'juil', vals: [248,126,206,266,226,320,208] },
+  { sem: '20 juil.',    m: 'juil', vals: [208,210,213,270,296,391,235] },
+  { sem: '27 juil.',    m: 'juil', vals: [255,272,301,297,334,437,366] },
+];
+
+const midiData = [
+  { sem: '',            m: '',     vals: [null,null,null,null,217,214,185] },
+  { sem: '5 janv.',     m: 'jan',  vals: [97,76,126,127,120,229,204] },
+  { sem: '12 janv.',    m: 'jan',  vals: [117,133,118,87,123,246,147] },
+  { sem: '19 janv.',    m: 'jan',  vals: [103,116,137,125,143,219,190] },
+  { sem: '26 janv.',    m: 'jan',  vals: [97,126,101,115,152,227,190] },
+  { sem: '2 févr.',     m: 'fev',  vals: [110,101,133,119,110,226,190] },
+  { sem: '9 févr.',     m: 'fev',  vals: [85,158,144,154,161,214,221] },
+  { sem: '16 févr.',    m: 'fev',  vals: [159,138,108,114,179,189,190] },
+  { sem: '23 févr.',    m: 'fev',  vals: [86,71,109,113,138,257,179] },
+  { sem: '2 mars',      m: 'mars', vals: [66,65,68,101,114,200,194] },
+  { sem: '9 mars',      m: 'mars', vals: [83,97,107,146,94,203,135] },
+  { sem: '16 mars',     m: 'mars', vals: [78,73,54,50,92,165,135] },
+  { sem: '23 mars',     m: 'mars', vals: [90,48,96,88,97,207,129] },
+  { sem: '30 mars',     m: 'mars', vals: [106,77,116,86,82,153,138] },
+  { sem: '6 avr.',      m: 'avr',  vals: [110,46,76,89,105,202,170] },
+  { sem: '13 avr.',     m: 'avr',  vals: [141,99,128,106,113,169,193] },
+  { sem: '20 avr.',     m: 'avr',  vals: [76,73,57,83,45,198,124] },
+  { sem: '27 avr.',     m: 'avr',  vals: [62,87,98,110,127,210,190] },
+  { sem: '4 mai',       m: 'mai',  vals: [96,105,145,102,157,155,162] },
+  { sem: '11 mai',      m: 'mai',  vals: [101,72,106,184,178,197,151] },
+  { sem: '18 mai',      m: 'mai',  vals: [77,82,62,69,55,65,105] },
+  { sem: '25 mai',      m: 'mai',  vals: [98,57,63,56,96,143,267] },
+  { sem: '1 juin',      m: 'juin', vals: [54,81,92,138,101,204,125] },
+  { sem: '8 juin',      m: 'juin', vals: [117,102,128,77,115,151,111] },
+  { sem: '15 juin',     m: 'juin', vals: [76,113,88,107,72,115,171] },
+  { sem: '22 juin',     m: 'juin', vals: [50,60,131,139,96,178,175] },
+  { sem: '29 juin',     m: 'juin', vals: [88,109,109,67,167,117,93] },
+  { sem: '6 juil.',     m: 'juil', vals: [58,77,94,80,87,133,122] },
+  { sem: '13 juil.',    m: 'juil', vals: [111,97,96,107,73,140,63] },
+  { sem: '20 juil.',    m: 'juil', vals: [63,102,80,80,151,159,125] },
+  { sem: '27 juil.',    m: 'juil', vals: [105,109,100,95,146,180,203] },
+];
+
+const soirData = [
+  { sem: '',            m: '',     vals: [null,null,null,null,251,265,118] },
+  { sem: '5 janv.',     m: 'jan',  vals: [62,107,120,119,234,272,164] },
+  { sem: '12 janv.',    m: 'jan',  vals: [71,124,115,156,267,255,71] },
+  { sem: '19 janv.',    m: 'jan',  vals: [73,125,94,119,227,256,79] },
+  { sem: '26 janv.',    m: 'jan',  vals: [98,108,129,150,244,241,98] },
+  { sem: '2 févr.',     m: 'fev',  vals: [120,137,121,161,240,274,97] },
+  { sem: '9 févr.',     m: 'fev',  vals: [91,166,156,147,245,272,139] },
+  { sem: '16 févr.',    m: 'fev',  vals: [112,185,151,178,261,254,90] },
+  { sem: '23 févr.',    m: 'fev',  vals: [77,123,133,116,239,256,73] },
+  { sem: '2 mars',      m: 'mars', vals: [81,120,126,107,226,316,79] },
+  { sem: '9 mars',      m: 'mars', vals: [87,82,144,109,220,230,100] },
+  { sem: '16 mars',     m: 'mars', vals: [82,108,131,133,234,235,73] },
+  { sem: '23 mars',     m: 'mars', vals: [88,96,121,116,216,299,83] },
+  { sem: '30 mars',     m: 'mars', vals: [80,99,153,188,188,198,116] },
+  { sem: '6 avr.',      m: 'avr',  vals: [53,89,131,135,176,247,104] },
+  { sem: '13 avr.',     m: 'avr',  vals: [138,124,141,157,202,259,79] },
+  { sem: '20 avr.',     m: 'avr',  vals: [62,93,78,98,198,249,65] },
+  { sem: '27 avr.',     m: 'avr',  vals: [51,133,100,203,191,296,91] },
+  { sem: '4 mai',       m: 'mai',  vals: [105,149,100,184,197,283,97] },
+  { sem: '11 mai',      m: 'mai',  vals: [73,132,170,185,209,264,63] },
+  { sem: '18 mai',      m: 'mai',  vals: [94,129,137,78,89,80,70] },
+  { sem: '25 mai',      m: 'mai',  vals: [49,50,56,87,132,134,154] },
+  { sem: '1 juin',      m: 'juin', vals: [99,116,100,127,171,182,78] },
+  { sem: '8 juin',      m: 'juin', vals: [104,117,129,123,167,106,50] },
+  { sem: '15 juin',     m: 'juin', vals: [81,83,132,106,124,60,105] },
+  { sem: '22 juin',     m: 'juin', vals: [80,137,139,147,73,192,135] },
+  { sem: '29 juin',     m: 'juin', vals: [106,120,120,158,145,94,88] },
+  { sem: '6 juil.',     m: 'juil', vals: [82,154,118,84,156,146,145] },
+  { sem: '13 juil.',    m: 'juil', vals: [137,29,110,159,153,180,145] },
+  { sem: '20 juil.',    m: 'juil', vals: [145,108,133,190,145,232,110] },
+  { sem: '27 juil.',    m: 'juil', vals: [150,163,201,202,188,257,163] },
+];
+
+function colMinMax(data, col) {
+  const vals = data.map(r => r.vals[col]).filter(v => v !== null);
+  return { min: Math.min(...vals), max: Math.max(...vals) };
+}
+function heatClass(val, min, max) {
+  if (val === null) return 'h-na';
+  const p = (val - min) / (max - min);
+  if (p < 0.12) return 'h-r4'; if (p < 0.22) return 'h-r3';
+  if (p < 0.32) return 'h-r2'; if (p < 0.42) return 'h-r1';
+  if (p < 0.52) return 'h-o4'; if (p < 0.60) return 'h-o3';
+  if (p < 0.67) return 'h-o2'; if (p < 0.73) return 'h-y4';
+  if (p < 0.80) return 'h-y3'; if (p < 0.87) return 'h-y2';
+  if (p < 0.93) return 'h-g2'; if (p < 0.97) return 'h-g3';
+  return 'h-g4';
+}
+function buildTable(id, data) {
+  const tbl = document.getElementById(id);
+  const colStats = jours.map((_,j) => colMinMax(data, j));
+  const thead = tbl.createTHead();
+  const hr = thead.insertRow();
+  const th0 = document.createElement('th'); th0.textContent = 'Semaine'; hr.appendChild(th0);
+  jours.forEach(j => { const th = document.createElement('th'); th.textContent = j; hr.appendChild(th); });
+  const tbody = tbl.createTBody();
+  data.forEach(row => {
+    const tr = tbody.insertRow();
+    if (row.m) tr.className = 'month-' + row.m;
+    const td0 = tr.insertCell(); td0.textContent = row.sem;
+    row.vals.forEach((val, j) => {
+      const td = tr.insertCell();
+      td.textContent = val !== null ? val : '';
+      td.className = val !== null ? heatClass(val, colStats[j].min, colStats[j].max) : 'h-na';
+    });
+  });
+}
+buildTable('tbl-total', totalData);
+buildTable('tbl-midi', midiData);
+buildTable('tbl-soir', soirData);
+
+// CHARTS
+const months = ['Nov.','Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.'];
+new Chart(document.getElementById('caChart'), {
+  type: 'bar',
+  data: { labels: months, datasets: [{ data: [201645,182322,177578,156677,152886,156710,137707,147703], backgroundColor: ['#1e2e1e','#1e2e1e','#1e2e1e','#1e2e1e','#1e2e1e','#1e2e1e','#1e2e1e','#4aad60'], borderRadius: 3 }] },
+  options: { ...chartOpts, scales: { y: { ticks: { color: '#aaa', font: { size: 10 }, callback: v => (v/1000).toFixed(0)+'k€' }, grid: { color: gridColor } }, x: { ticks: { color: '#ccc', font: { size: 10 } }, grid: { display: false } } } }
+});
+
+new Chart(document.getElementById('cvtsChart'), {
+  type: 'bar',
+  data: { labels: months, datasets: [
+    { label: 'Midi', data: [4649,4417,4167,3437,3335,3733,3364,3036], backgroundColor: '#2e7040', borderRadius: 3 },
+    { label: 'Soir', data: [5053,4714,4639,4294,4208,4128,3489,4185], backgroundColor: '#185FA5', borderRadius: 3 },
+  ]},
+  options: { ...chartOpts, scales: { y: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { color: gridColor } }, x: { ticks: { color: '#ccc', font: { size: 10 } }, grid: { display: false } } } }
+});
+
+new Chart(document.getElementById('semChart'), {
+  type: 'bar',
+  data: {
+    labels: ['S28 6/7','S29 13/7','S30 20/7','S31 27/7'],
+    datasets: [{ data: [29741,30379,35497,45438], backgroundColor: ['#2e5040','#2e5040','#2e7040','#4aad60'], borderRadius: 3 }]
+  },
+  options: { ...chartOpts, scales: { y: { ticks: { color: '#aaa', font: { size: 10 }, callback: v => (v/1000).toFixed(0)+'k€' }, grid: { color: gridColor } }, x: { ticks: { color: '#ccc', font: { size: 11 } }, grid: { display: false } } } }
+});
+
+new Chart(document.getElementById('soirChart'), {
+  type: 'line',
+  data: {
+    labels: ['S28','S29','S30','S31'],
+    datasets: [
+      { label: 'Semaine', data: [110,109,144,179], borderColor: '#378ADD', backgroundColor: 'transparent', tension: 0.3, pointRadius: 5, pointBackgroundColor: '#378ADD' },
+      { label: 'Week-end', data: [151,167,189,223], borderColor: '#5DCAA5', backgroundColor: 'transparent', tension: 0.3, pointRadius: 5, pointBackgroundColor: '#5DCAA5', borderDash: [5,3] },
+    ]
+  },
+  options: { ...chartOpts, scales: { y: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { color: gridColor } }, x: { ticks: { color: '#ccc', font: { size: 12 } }, grid: { display: false } } } }
+});
+</script>
+</body>
+</html>
